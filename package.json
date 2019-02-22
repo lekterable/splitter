@@ -4,8 +4,14 @@
   "description": "",
   "main": "server.js",
   "scripts": {
+    "start": "node server",
+    "start:dev": "concurrently \"nodemon server.js\" \"cd client && PORT=3000 npm start\"",
     "test": "jest"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^4.1.0",
+    "nodemon": "^1.18.10"
+  }
 }
