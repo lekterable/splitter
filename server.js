@@ -98,6 +98,10 @@ const typeDefs = gql`
     householder(id: String!): Householder
     household(id: String!): Household
   }
+
+  type Mutation {
+    login(email: String!, password: String!): String
+  }
 `
 
 const resolvers = {
@@ -148,6 +152,17 @@ const resolvers = {
     householder: (_, { id }) =>
       householders.find(householder => householder.id === id),
     household: (_, { id }) => households.find(household => household.id === id)
+  },
+  Mutation: {
+    login: (_, { email, password }) => {
+      const householder = householders.find(
+        householder => householder.email === email
+      )
+      if (!householder || householder.password !== password)
+        throw new Error('User not found')
+
+      return 'token'
+    }
   }
 }
 
