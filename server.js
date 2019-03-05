@@ -172,7 +172,32 @@ const resolvers = {
   }
 }
 
-const server = new ApolloServer({ typeDefs, resolvers })
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: ({ req }) => {
+    const token = req.headers.authorization
+    const bearer = 'Bearer '
+    if (token && token.length > bearer.length) {
+      try {
+        const decoded = jwt.verify(
+          token.replace(bearer, ''),
+          process.env.JWT_SECRET
+        )
+        const user = householders.find(
+          householder => householder.id === decoded.id
+        )
+        if (!user) throw new Error('User not found')
+        return {
+          user
+        }
+      } catch (err) {
+        console.error(err.message)
+      }
+    }
+    return {}
+  }
+})
 
 server.listen().then(({ url }) => {
   console.log(`🚀 Server ready at ${url}`)
