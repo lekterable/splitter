@@ -1,6 +1,7 @@
 const { ApolloServer, gql } = require('apollo-server')
 const { GraphQLScalarType } = require('graphql')
 const { Kind } = require('graphql/language')
+const jwt = require('jsonwebtoken')
 
 const expenses = [
   {
@@ -161,7 +162,12 @@ const resolvers = {
       if (!householder || householder.password !== password)
         throw new Error('User not found')
 
-      return 'token'
+      return jwt.sign(
+        {
+          id: householder.id
+        },
+        process.env.JWT_SECRET
+      )
     }
   }
 }
