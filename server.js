@@ -98,6 +98,7 @@ const typeDefs = gql`
     expenses(householder: String, household: String): [Expense]
     householder(id: String!): Householder
     household(id: String!): Household
+    households: [Household]
   }
 
   type Mutation {
@@ -152,7 +153,11 @@ const resolvers = {
     },
     householder: (_, { id }) =>
       householders.find(householder => householder.id === id),
-    household: (_, { id }) => households.find(household => household.id === id)
+    household: (_, { id }) => households.find(household => household.id === id),
+    households: (_, __, { user }) =>
+      households.filter(household =>
+        household.householders.some(householder => householder === user.id)
+      )
   },
   Mutation: {
     login: (_, { email, password }) => {
