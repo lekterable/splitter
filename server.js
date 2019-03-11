@@ -82,6 +82,7 @@ const typeDefs = gql`
   type Householder {
     id: String!
     name: String!
+    email: String!
     expenses: [Expense]
     households: [Household]
   }
@@ -95,6 +96,7 @@ const typeDefs = gql`
   }
 
   type Query {
+    me: Householder
     expenses(householder: String, household: String): [Expense]
     householder(id: String!): Householder
     household(id: String!): Household
@@ -144,6 +146,7 @@ const resolvers = {
       )
   },
   Query: {
+    me: (_, __, { user }) => (user ? user : null),
     expenses: (_, { householder, household }) => {
       if (householder)
         return expenses.filter(expense => expense.householder === householder)
