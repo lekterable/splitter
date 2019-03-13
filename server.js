@@ -124,9 +124,9 @@ const resolvers = {
   }),
   Expense: {
     householder: root =>
-      householders.find(householder => householder.name === root.householder),
+      householders.find(householder => householder.id === root.householder),
     household: root =>
-      households.find(household => household.name === root.household)
+      households.find(household => household.id === root.household)
   },
   Householder: {
     expenses: ({ id }) =>
