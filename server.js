@@ -3,7 +3,7 @@ const { GraphQLScalarType } = require('graphql')
 const { Kind } = require('graphql/language')
 const jwt = require('jsonwebtoken')
 
-const expenses = [
+let expenses = [
   {
     id: '1',
     date: 1550871882000,
@@ -104,7 +104,15 @@ const typeDefs = gql`
   }
 
   type Mutation {
-    login(email: String!, password: String!): String
+    login(email: String!, password: String!): String!
+    addExpense(
+      date: Date!
+      description: String
+      type: ExpenseType!
+      householder: String!
+      household: String!
+      cost: Int!
+    ): Expense!
   }
 `
 
@@ -176,6 +184,22 @@ const resolvers = {
         },
         process.env.JWT_SECRET
       )
+    },
+    addExpense: (
+      _,
+      { date, description, type, householder, household, cost }
+    ) => {
+      const expense = {
+        id: String(expenses.length + 1),
+        date,
+        description,
+        type,
+        householder,
+        household,
+        cost
+      }
+      expenses = [...expenses, expense]
+      return expense
     }
   }
 }
