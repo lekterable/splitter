@@ -23,7 +23,7 @@ let expenses = [
   }
 ]
 
-const householders = [
+let householders = [
   { id: '1', name: 'Joey', email: 'joey@gmail.com', password: 'joey123' },
   { id: '2', name: 'Chandler', email: 'chand@gmail.com', password: 'chand123' },
   { id: '3', name: 'Monica', email: 'monica@gmail.com', password: 'monica123' },
@@ -105,6 +105,7 @@ const typeDefs = gql`
 
   type Mutation {
     login(email: String!, password: String!): String!
+    register(name: String!, email: String!, password: String!): String!
     addExpense(
       date: Date!
       description: String
@@ -177,6 +178,22 @@ const resolvers = {
       )
       if (!householder || householder.password !== password)
         throw new Error('User not found')
+
+      return jwt.sign(
+        {
+          id: householder.id
+        },
+        process.env.JWT_SECRET
+      )
+    },
+    register: (_, { name, email, password }) => {
+      const householder = {
+        id: String(householders.length + 1),
+        name,
+        email,
+        password
+      }
+      householders = [...householders, householder]
 
       return jwt.sign(
         {
