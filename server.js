@@ -32,7 +32,7 @@ let householders = [
   { id: '6', name: 'Phoebe', email: 'phoebe@gmail.com', password: 'phoebe123' }
 ]
 
-const households = [
+let households = [
   {
     id: '1',
     owner: '2',
@@ -114,6 +114,7 @@ const typeDefs = gql`
       household: String!
       cost: Int!
     ): Expense!
+    addHousehold(name: String!): Household!
   }
 `
 
@@ -217,6 +218,16 @@ const resolvers = {
       }
       expenses = [...expenses, expense]
       return expense
+    },
+    addHousehold: (_, { name }, { user }) => {
+      const household = {
+        id: String(households.length + 1),
+        owner: user.id,
+        name,
+        householders: [user.id]
+      }
+      households = [...households, household]
+      return household
     }
   }
 }
