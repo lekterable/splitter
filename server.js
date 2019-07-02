@@ -97,6 +97,7 @@ const typeDefs = gql`
 
   type Query {
     me: Householder
+    expense(id: String!): Expense
     expenses(householder: String, household: String): [Expense]
     householder(id: String!): Householder
     household(id: String!): Household
@@ -121,15 +122,11 @@ const typeDefs = gql`
 const resolvers = {
   Date: new GraphQLScalarType({
     name: 'Date',
-    parseValue(value) {
-      return new Date(value)
-    },
-    serialize(value) {
-      return value.getTime()
-    },
-    parseLiteral({ kind, value }) {
+    parseValue: value => value,
+    serialize: value => value,
+    parseLiteral: ({ kind, value }) => {
       if (kind === Kind.INT) return Number(value)
-      return null
+      throw new Error('Incorrect date format')
     }
   }),
   Expense: {
@@ -157,6 +154,7 @@ const resolvers = {
   },
   Query: {
     me: (_, __, { user }) => (user ? user : null),
+    expense: (_, { id }) => expenses.find(expense => expense.id === id),
     expenses: (_, { householder, household }) => {
       if (householder)
         return expenses.filter(expense => expense.householder === householder)
