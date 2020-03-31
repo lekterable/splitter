@@ -9,21 +9,21 @@ let expenses = [
     date: 1550871882000,
     type: 'FOOD',
     description: 'Pizza',
-    householder: '1',
-    household: '1',
+    member: '1',
+    group: '1',
     cost: 100
   },
   {
     id: '2',
     date: 1550871884000,
     type: 'OTHER',
-    householder: '1',
-    household: '1',
+    member: '1',
+    group: '1',
     cost: 100
   }
 ]
 
-let householders = [
+let members = [
   { id: '1', name: 'Joey', email: 'joey@gmail.com', password: 'joey123' },
   { id: '2', name: 'Chandler', email: 'chand@gmail.com', password: 'chand123' },
   { id: '3', name: 'Monica', email: 'monica@gmail.com', password: 'monica123' },
@@ -32,30 +32,30 @@ let householders = [
   { id: '6', name: 'Phoebe', email: 'phoebe@gmail.com', password: 'phoebe123' }
 ]
 
-let households = [
+let groups = [
   {
     id: '1',
     owner: '2',
     name: 'Apartment no. 19',
-    householders: ['1', '2']
+    members: ['1', '2']
   },
   {
     id: '2',
     owner: '3',
     name: 'Apartment no. 20',
-    householders: ['3', '4']
+    members: ['3', '4']
   },
   {
     id: '3',
     owner: '5',
     name: 'Apartment no. 3B',
-    householders: ['5']
+    members: ['5']
   },
   {
     id: '4',
     owner: '6',
     name: 'Apartment no. 14',
-    householders: ['6']
+    members: ['6']
   }
 ]
 
@@ -74,34 +74,34 @@ const typeDefs = gql`
     date: Date!
     description: String
     type: ExpenseType!
-    householder: Householder!
-    household: Household!
+    member: Member!
+    group: Group!
     cost: Int!
   }
 
-  type Householder {
+  type Member {
     id: String!
     name: String!
     email: String!
     expenses: [Expense]
-    households: [Household]
+    groups: [Group]
   }
 
-  type Household {
+  type Group {
     id: String!
-    owner: Householder!
+    owner: Member!
     name: String!
     expenses: [Expense]
-    householders: [Householder]
+    members: [Member]
   }
 
   type Query {
-    me: Householder
+    me: Member
     expense(id: String!): Expense
-    expenses(householder: String, household: String): [Expense]
-    householder(id: String!): Householder
-    household(id: String!): Household
-    households: [Household]
+    expenses(member: String, group: String): [Expense]
+    member(id: String!): Member
+    group(id: String!): Group
+    groups: [Group]
   }
 
   type Mutation {
@@ -111,11 +111,10 @@ const typeDefs = gql`
       date: Date!
       description: String
       type: ExpenseType!
-      householder: String!
-      household: String!
+      group: String!
       cost: Int!
     ): Expense!
-    addHousehold(name: String!): Household!
+    addGroup(name: String!): Group!
   }
 `
 
@@ -130,102 +129,78 @@ const resolvers = {
     }
   }),
   Expense: {
-    householder: root =>
-      householders.find(householder => householder.id === root.householder),
-    household: root =>
-      households.find(household => household.id === root.household)
+    member: root => members.find(member => member.id === root.member),
+    group: root => groups.find(group => group.id === root.group)
   },
-  Householder: {
-    expenses: ({ id }) =>
-      expenses.filter(expense => expense.householder === id),
-    households: ({ id }) =>
-      households.filter(household =>
-        household.householders.some(householder => householder === id)
-      )
+  Member: {
+    expenses: ({ id }) => expenses.filter(expense => expense.member === id),
+    groups: ({ id }) =>
+      groups.filter(group => group.members.some(member => member === id))
   },
-  Household: {
-    owner: ({ owner }) =>
-      householders.find(householder => householder.id === owner),
-    expenses: ({ id }) => expenses.filter(expense => expense.household === id),
-    householders: root =>
-      root.householders.map(rootHouseholder =>
-        householders.find(householder => householder.id === rootHouseholder)
+  Group: {
+    owner: ({ owner }) => members.find(member => member.id === owner),
+    expenses: ({ id }) => expenses.filter(expense => expense.group === id),
+    members: root =>
+      root.members.map(rootMember =>
+        members.find(member => member.id === rootMember)
       )
   },
   Query: {
     me: (_, __, { user }) => (user ? user : null),
     expense: (_, { id }) => expenses.find(expense => expense.id === id),
-    expenses: (_, { householder, household }) => {
-      if (householder)
-        return expenses.filter(expense => expense.householder === householder)
-      else if (household)
-        return expenses.filter(expense => expense.household === household)
-      else throw new Error('Specify householder or household')
+    expenses: (_, { member, group }) => {
+      if (member) return expenses.filter(expense => expense.member === member)
+      else if (group) return expenses.filter(expense => expense.group === group)
+      else throw new Error('Specify member or group')
     },
-    householder: (_, { id }) =>
-      householders.find(householder => householder.id === id),
-    household: (_, { id }) => households.find(household => household.id === id),
-    households: (_, __, { user }) =>
-      households.filter(household =>
-        household.householders.some(householder => householder === user.id)
-      )
+    member: (_, { id }) => members.find(member => member.id === id),
+    group: (_, { id }) => groups.find(group => group.id === id),
+    groups: (_, __, { user }) =>
+      groups.filter(group => group.members.some(member => member === user.id))
   },
   Mutation: {
     login: (_, { email, password }) => {
-      const householder = householders.find(
-        householder => householder.email === email
-      )
-      if (!householder || householder.password !== password)
+      const member = members.find(member => member.email === email)
+      if (!member || member.password !== password)
         throw new Error('User not found')
 
-      return jwt.sign(
-        {
-          id: householder.id
-        },
-        process.env.JWT_SECRET
-      )
+      return jwt.sign({ id: member.id }, process.env.JWT_SECRET)
     },
     register: (_, { name, email, password }) => {
-      const householder = {
-        id: String(householders.length + 1),
+      const member = {
+        id: String(members.length + 1),
         name,
         email,
         password
       }
-      householders = [...householders, householder]
 
-      return jwt.sign(
-        {
-          id: householder.id
-        },
-        process.env.JWT_SECRET
-      )
+      members = [...members, member]
+      return jwt.sign({ id: member.id }, process.env.JWT_SECRET)
     },
-    addExpense: (
-      _,
-      { date, description, type, householder, household, cost }
-    ) => {
+    addExpense: (_, { date, description, type, group, cost }, { user }) => {
       const expense = {
         id: String(expenses.length + 1),
         date,
         description,
         type,
-        householder,
-        household,
+        member: user.id,
+        group,
         cost
       }
+
       expenses = [...expenses, expense]
       return expense
     },
-    addHousehold: (_, { name }, { user }) => {
-      const household = {
-        id: String(households.length + 1),
+    addGroup: (_, { name }, { user }) => {
+      const group = {
+        id: String(groups.length + 1),
         owner: user.id,
         name,
-        householders: [user.id]
+        members: [user.id]
       }
-      households = [...households, household]
-      return household
+
+      groups = [...groups, group]
+      return group
     }
   }
 }
@@ -242,9 +217,7 @@ const server = new ApolloServer({
           token.replace(bearer, ''),
           process.env.JWT_SECRET
         )
-        const user = householders.find(
-          householder => householder.id === decoded.id
-        )
+        const user = members.find(member => member.id === decoded.id)
         if (!user) throw new Error('User not found')
         return {
           user
